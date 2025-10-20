@@ -75,18 +75,22 @@ class TBlockClient {
         return await this._runner.runQueued([...TBLOCK_BASE_ARGS, op]);
     }
 
+    async buildHosts() {
+        return await this._runner.runQueued([...TBLOCK_BASE_ARGS, '--build']);
+    }
+
     async getStatus() {
         const result = await this._runner.runQueued(['--status', '--quiet'], {requireRoot: false});
         if (!result.success) {
-            return null;
+            return {...result, active: null};
         }
 
-        const match = result.stdout.match(/Protection:\s*(active|inactive)/i);
+        const match = result.stdout?.match(/Protection:\s*(active|inactive)/i);
         if (!match) {
-            return null;
+            return {...result, success: false, active: null};
         }
 
-        return match[1].toLowerCase() === 'active';
+        return {...result, active: match[1].toLowerCase() === 'active'};
     }
 }
 
@@ -101,6 +105,7 @@ class Indicator extends PanelMenu.Button {
         this._ignoreSetting = false;
         this._isBusy = false;
         this._pendingState = null;
+        this._lastStatusErrorDetail = null;
 
         this._label = new St.Label({
             text: '',
@@ -140,13 +145,18 @@ class Indicator extends PanelMenu.Button {
 
     async _initializeState() {
         try {
-            const active = await this._tblock.getStatus();
-            if (active === null) {
+            const status = await this._tblock.getStatus();
+            if (!status.success) {
+                this._handleStatusError('during initialization', status);
                 return;
             }
 
+            this._lastStatusErrorDetail = null;
+
+            const active = status.active ?? false;
             if (active !== this._settings.get_boolean('block-ads')) {
-                this._withSettingsBlocked(() => this._settings.set_boolean('block-ads', active));
+                this._updateSettingSilently(active);
+            } else {
                 this._syncFromSettings();
             }
         } catch (error) {
@@ -168,6 +178,52 @@ class Indicator extends PanelMenu.Button {
         this._switchItem.setSensitive(!busy);
     }
 
+    _updateSettingSilently(value) {
+        const current = this._settings.get_boolean('block-ads');
+        if (current === value) {
+            this._syncFromSettings();
+            return;
+        }
+
+        this._withSettingsBlocked(() => this._settings.set_boolean('block-ads', value));
+        this._syncFromSettings();
+    }
+
+    _getResultDetail(result) {
+        const stderr = result?.stderr?.trim();
+        const stdout = result?.stdout?.trim();
+        return stderr || stdout || 'No additional details provided.';
+    }
+
+    _handleStatusError(context, result) {
+        this._updateSettingSilently(false);
+
+        const detail = this._getResultDetail(result);
+        if (this._lastStatusErrorDetail === detail) {
+            return;
+        }
+
+        this._lastStatusErrorDetail = detail;
+        const location = context ? ` ${context}` : '';
+        Main.notify(
+            'gnoMAD',
+            `Unable to determine TBlock status${location}.\n${detail}\nInitialise TBlock (for example by running "tblock --build" with administrator privileges) and try again.`
+        );
+    }
+
+    _notifyStatusMismatch(requestedEnabled, actualActive) {
+        const action = requestedEnabled ? 'enable TBlock' : 'disable TBlock';
+        const stateText = actualActive ? 'active' : 'inactive';
+        const suggestion = requestedEnabled
+            ? 'Try running "tblock --build" with administrator privileges, then toggle the switch again.'
+            : 'Try running "tblock --disable" with administrator privileges, then toggle the switch again.';
+
+        Main.notify(
+            'gnoMAD',
+            `TBlock still reports protection as ${stateText} after attempting to ${action}.\n${suggestion}`
+        );
+    }
+
     async _applyBlockState(enabled) {
         if (this._isBusy) {
             this._pendingState = enabled;
@@ -180,17 +236,57 @@ class Indicator extends PanelMenu.Button {
         try {
             const result = await this._tblock.setEnabled(enabled);
 
-            if (result.success) {
+            if (!result.success) {
+                this._notifyFailure(enabled, result);
+                this._updateSettingSilently(!enabled);
                 return;
             }
 
-            this._notifyFailure(enabled, result);
-            this._withSettingsBlocked(() => this._settings.set_boolean('block-ads', !enabled));
-            this._syncFromSettings();
+            let status = await this._tblock.getStatus();
+            if (!status.success) {
+                this._handleStatusError('while checking status', status);
+                return;
+            }
+
+            this._lastStatusErrorDetail = null;
+
+            if (status.active !== enabled) {
+                if (enabled) {
+                    const buildResult = await this._tblock.buildHosts();
+                    if (!buildResult.success) {
+                        this._notifyFailure(
+                            enabled,
+                            buildResult,
+                            'TBlock protection stayed inactive. Rebuilding the hosts file failed.'
+                        );
+                        this._updateSettingSilently(false);
+                        return;
+                    }
+
+                    status = await this._tblock.getStatus();
+                    if (!status.success) {
+                        this._handleStatusError('after rebuilding the hosts file', status);
+                        return;
+                    }
+
+                    this._lastStatusErrorDetail = null;
+
+                    if (!status.active) {
+                        this._notifyStatusMismatch(true, status.active);
+                        this._updateSettingSilently(status.active ?? false);
+                        return;
+                    }
+                } else {
+                    this._notifyStatusMismatch(false, status.active);
+                    this._updateSettingSilently(status.active ?? false);
+                    return;
+                }
+            }
+
+            this._updateSettingSilently(enabled);
         } catch (error) {
             this._notifyFailure(enabled, {stderr: error.message, stdout: '', exitCode: -1});
-            this._withSettingsBlocked(() => this._settings.set_boolean('block-ads', !enabled));
-            this._syncFromSettings();
+            this._updateSettingSilently(!enabled);
             throw error;
         } finally {
             this._setBusy(false);
@@ -203,9 +299,9 @@ class Indicator extends PanelMenu.Button {
         }
     }
 
-    _notifyFailure(enabled, result) {
+    _notifyFailure(enabled, result, message = null) {
         const action = enabled ? 'enable TBlock' : 'disable TBlock';
-        const detail = result?.stderr || result?.stdout || 'No additional details provided.';
+        const detail = message ?? this._getResultDetail(result);
         Main.notify('gnoMAD', `Failed to ${action}.\n${detail}`);
     }
 
