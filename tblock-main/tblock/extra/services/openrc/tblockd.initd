@@ -1,0 +1,14 @@
+#!/usr/bin/openrc-run
+# Copyright 2021 Twann <tw4nn@disroot.org>
+# Distributed under the terms of the GNU General Public License v3
+
+description="TBlock Daemon"
+
+depend() {
+    need net
+}
+
+supervisor=supervise-daemon
+command="/usr/bin/tblockd"
+command_args="--daemon --no-pid --config=/etc/tblock.conf --quiet"
+pidfile="/run/tblockd.pid"

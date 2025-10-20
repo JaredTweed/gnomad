@@ -1,0 +1,55 @@
+{
+  "repo": {
+    "version": "211023",
+    "tags": ["ads", "annoyances", "circumvention", "countryspecific", "deadsites", "fakenews", "gambling", "illegal", "malware", "piracy", "porn", "services", "social", "spam", "tracking"],
+    "warnings": {
+      "0": "no issue detected",
+      "1": "may break some web pages",
+      "2": "may break some apps and web pages",
+      "3": "may slow boot or internet connection",
+      "4": "not recommended for daily use"
+    }
+  },
+  "filters": {
+    "tblock-base": {
+      "title": "TBlock Base filter",
+      "desc": "Filter composed of EasyList, EasyPrivacy, Adaway & Twann's List",
+      "homepage": "https://tblock.codeberg.page/",
+      "license": ["GPL-3.0", "https://codeberg.org/tblock/filters/raw/branch/main/LICENSE"],
+      "syntax": "tblock",
+      "source": "https://codeberg.org/tblock/filters/raw/branch/main/filters/base/tblock.txt",
+      "mirrors": [
+        ["https://codeberg.org/tblock/mirror/media/branch/2.0.0/lists/tblock-base.xz", "xz"],
+        ["https://framagit.org/twann/mirror/-/raw/2.0.0/lists/tblock-base.xz", "xz"]
+      ],
+      "tags": ["ads", "tracking"],
+      "warning": "0"
+    },
+    "test-list": {
+      "title": "Test list",
+      "desc": "Local test list for TBlock",
+      "homepage": "https://tblock.codeberg.page/",
+      "license": ["GPL-3.0", "https://codeberg.org/tblock/tblock/raw/branch/main/LICENSE"],
+      "syntax": "tblock",
+      "source": "http://127.0.0.1:12345/test-list.txt",
+      "mirrors": [
+        ["http://127.0.0.1:12345/test-list.txt.xz", "xz"],
+        ["http://127.0.0.1:12345/test-list.txt.gz", "gzip"],
+        ["http://127.0.0.1:12345/test-list.txt", null]
+      ],
+      "tags": ["ads", "tracking"],
+      "warning": "0"
+    },
+    "test-list-2": {
+      "title": "Test list 2",
+      "desc": "Local test list for TBlock",
+      "homepage": "https://tblock.codeberg.page/",
+      "license": ["GPL-3.0", "https://codeberg.org/tblock/tblock/raw/branch/main/LICENSE"],
+      "syntax": "tblock",
+      "source": "http://127.0.0.1:12345/test-list-2.txt",
+      "mirrors": [],
+      "tags": [],
+      "warning": "0"
+    }
+  }
+}

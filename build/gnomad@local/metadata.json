@@ -1,0 +1,9 @@
+{
+"uuid": "gnomad@local",
+"name": "gnomad",
+"description": "Top‑bar indicator that shows 'Ads' or 'No Ads' and a tiny menu with a toggle and a settings button.",
+"version": 1,
+"shell-version": ["45", "46", "47", "48"],
+"url": "",
+"settings-schema": "org.gnome.shell.extensions.gnomad"
+}

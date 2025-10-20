@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+export ROOT = "./debian/tblock"
+export DESTDIR = "$(ROOT)/usr"
+export PYTHON = "/usr/bin/python3"
+export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	python3 setup.py build
+	make build-files
+
+override_dh_auto_install:
+	make ROOT=$(ROOT) install-files install-config
+	python3 setup.py install --install-layout=deb --root=$(ROOT) --skip-build --optimize=1
+	find ./debian -type f -name "LICENSE" -delete
+
+override_dh_auto_test:
+	# Don't run tests
+	true
+
+override_dh_python3:
+	dh_python3 --shebang=$(PYTHON)
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz

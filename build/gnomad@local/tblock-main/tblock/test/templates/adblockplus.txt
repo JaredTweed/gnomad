@@ -1,0 +1,7 @@
+[Adblock Plus 3.1]
+
+@@||tblock.codeberg.page^
+||example.org^
+||example.com^
+||block.example.org^
+||block.example.com^

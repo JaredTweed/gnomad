@@ -1,0 +1,15 @@
+[allow]
+allow.example.org
+allow.example.com
+
+[block]
+example.org
+example.com
+block.example.org
+block.example.com
+
+[redirect "0.0.0.2"]
+redirect.example.org
+
+[redirect "0.0.0.4"]
+redirect.example.com

@@ -1,0 +1,14 @@
+@BEGIN_RULES
+
+
+!allow
+tblock.codeberg.page
+
+!block
+example.org
+example.com
+block.example.org
+block.example.com
+
+
+@END_RULES

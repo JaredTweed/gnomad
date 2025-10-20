@@ -1,0 +1,10 @@
+[Unit]
+Description=TBlock Daemon
+Requires=network-online.target
+After=network-online.target 
+
+[Service]
+ExecStart=/usr/bin/env tblockd --daemon --config=/etc/tblock.conf --quiet
+
+[Install]
+WantedBy=default.target

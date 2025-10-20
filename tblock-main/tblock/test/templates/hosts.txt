@@ -1,0 +1,4 @@
+127.0.0.1		example.org
+127.0.0.1		example.com
+127.0.0.1		block.example.org
+127.0.0.1		block.example.com

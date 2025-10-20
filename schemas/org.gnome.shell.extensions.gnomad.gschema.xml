@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+<schema id="org.gnome.shell.extensions.gnomad" path="/org/gnome/shell/extensions/gnomad/">
+<key name="block-ads" type="b">
+<default>true</default>
+<summary>Whether ad blocking is considered ON</summary>
+<description>
+Controls the indicator text. If true, the panel reads "No Ads"; if false, it reads "Ads".
+</description>
+</key>
+</schema>
+</schemalist>

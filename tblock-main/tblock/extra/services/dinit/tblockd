@@ -1,0 +1,5 @@
+type            = process
+command         = /usr/bin/tblockd --daemon --config=/etc/tblock.conf --quiet
+smooth-recovery = true
+logfile         = /var/log/dinit/tblockd.log
+waits-for       = loginready
