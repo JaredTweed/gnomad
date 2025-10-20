@@ -147,7 +147,8 @@ class Indicator extends PanelMenu.Button {
         try {
             const status = await this._tblock.getStatus();
             if (!status.success) {
-                this._handleStatusError('during initialization', status);
+                this._handleStatusError('during initialization', status, {notify: false});
+                this._syncFromSettings();
                 return;
             }
 
@@ -195,20 +196,23 @@ class Indicator extends PanelMenu.Button {
         return stderr || stdout || 'No additional details provided.';
     }
 
-    _handleStatusError(context, result) {
-        this._updateSettingSilently(false);
-
+    _handleStatusError(context, result, {notify = true} = {}) {
         const detail = this._getResultDetail(result);
-        if (this._lastStatusErrorDetail === detail) {
-            return;
+        if (notify) {
+            if (this._lastStatusErrorDetail === detail) {
+                return;
+            }
+            this._lastStatusErrorDetail = detail;
         }
-
-        this._lastStatusErrorDetail = detail;
-        const location = context ? ` ${context}` : '';
-        Main.notify(
-            'gnoMAD',
-            `Unable to determine TBlock status${location}.\n${detail}\nInitialise TBlock (for example by running "tblock --build" with administrator privileges) and try again.`
-        );
+        if (notify) {
+            const location = context ? ` ${context}` : '';
+            Main.notify(
+                'gnoMAD',
+                `Unable to determine TBlock status${location}.\n${detail}\nInitialise TBlock (for example by running "tblock --build" with administrator privileges) and try again.`
+            );
+        } else {
+            log(`Unable to determine TBlock status ${context ?? ''}: ${detail}`);
+        }
     }
 
     _notifyStatusMismatch(requestedEnabled, actualActive) {

@@ -12,9 +12,12 @@ BUILD_DIR := build
 STAGING_DIR := $(BUILD_DIR)/$(EXTENSION_ID)
 PACKAGE := $(BUILD_DIR)/gnomad.zip
 
-.PHONY: install install-now uninstall pack clean
+.PHONY: install install-now install-files uninstall pack clean build-hosts
 
-install:
+install: install-files
+	@$(MAKE) --no-print-directory build-hosts
+
+install-files:
 	@echo "Installing extension to $(TARGET_DIR)"
 	@set -e; \
 	rm -rf "$(TARGET_DIR)"; \
@@ -63,8 +66,12 @@ $(PACKAGE): $(STAGING_DIR)
 
 $(STAGING_DIR):
 	@echo "Staging extension in $(STAGING_DIR)"
-	@$(MAKE) install DESTDIR= EXTENSION_INSTALL_DIR="$(STAGING_DIR)"
+	@$(MAKE) install-files DESTDIR= EXTENSION_INSTALL_DIR="$(STAGING_DIR)"
 
 clean:
 	@echo "Cleaning build artifacts"
 	@rm -rf "$(BUILD_DIR)"
+
+build-hosts:
+	@echo "Building TBlock hosts file (requires administrator privileges)"
+	@pkexec env PYTHONPATH="$(PWD)/tblock" python3 -m tblock --build --no-prompt
