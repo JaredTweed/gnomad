@@ -12,7 +12,7 @@ BUILD_DIR := build
 STAGING_DIR := $(BUILD_DIR)/$(EXTENSION_ID)
 PACKAGE := $(BUILD_DIR)/gnomad.zip
 
-.PHONY: install uninstall pack clean
+.PHONY: install install-now uninstall pack clean
 
 install:
 	@echo "Installing extension to $(TARGET_DIR)"
@@ -30,6 +30,18 @@ install:
 		exit 1; \
 	fi; \
 	"$(GLIB_COMPILE_SCHEMAS)" "$(TARGET_DIR)/schemas"
+
+install-now: install
+	@echo "Restarting GNOME Shell"
+	@set -e; \
+	if command -v busctl >/dev/null 2>&1; then \
+		busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'global.reexec_self();'; \
+	elif command -v dbus-send >/dev/null 2>&1; then \
+		dbus-send --session --type=method_call --dest=org.gnome.Shell /org/gnome/Shell org.gnome.Shell.Eval string:'global.reexec_self();'; \
+	else \
+		echo "Error: unable to restart GNOME Shell (busctl or dbus-send not found)." >&2; \
+		exit 1; \
+	fi
 
 uninstall:
 	@echo "Removing extension from $(TARGET_DIR)"
