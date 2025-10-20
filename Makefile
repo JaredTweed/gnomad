@@ -3,7 +3,7 @@ EXTENSION_INSTALL_DIR ?= $(HOME)/.local/share/gnome-shell/extensions/$(EXTENSION
 TARGET_DIR := $(DESTDIR)$(EXTENSION_INSTALL_DIR)
 
 INSTALL_FILES := extension.js metadata.json prefs.js
-INSTALL_DIRS := schemas tblock-main
+INSTALL_DIRS := schemas tblock
 
 GLIB_COMPILE_SCHEMAS ?= glib-compile-schemas
 ZIP ?= zip

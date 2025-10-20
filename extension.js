@@ -25,10 +25,10 @@ function getSettings() {
 class TBlockCommandRunner {
     constructor() {
         const extension = ExtensionUtils.getCurrentExtension();
-        const tblockDir = extension?.dir?.get_child('tblock-main')?.get_child('tblock');
+        const tblockDir = extension?.dir?.get_child('tblock');
 
         if (!tblockDir || !tblockDir.query_exists(null)) {
-            throw new Error('TBlock sources are missing; expected tblock-main/tblock inside the extension.');
+            throw new Error('TBlock sources are missing; expected tblock/ inside the extension.');
         }
 
         this._modulePath = tblockDir.get_path();
