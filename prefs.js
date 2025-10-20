@@ -3,7 +3,7 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
-import * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+import * as ExtensionUtils from 'resource:///org/gnome/shell/extensions/extensionUtils.js';
 
 function getSettings() {
     return ExtensionUtils.getSettings('org.gnome.shell.extensions.gnomad');

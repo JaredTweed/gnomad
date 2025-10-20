@@ -1,4 +1,0 @@
-example.org
-example.com
-block.example.org
-block.example.com

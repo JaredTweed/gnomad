@@ -33,11 +33,19 @@ install:
 
 install-now: install
 	@echo "Restarting GNOME Shell"
-	@set -e; \
-	if command -v busctl >/dev/null 2>&1; then \
-		busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'global.reexec_self();'; \
+	@if command -v busctl >/dev/null 2>&1; then \
+		result="$$(busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'global.reexec_self();')" || exit $$?; \
+		if printf '%s\n' "$$result" | grep -q ' true '; then \
+			printf '%s\n' "$$result"; \
+		else \
+			printf 'GNOME Shell declined to restart (likely Wayland). Please log out/in or restart the session manually.\n' >&2; \
+		fi; \
 	elif command -v dbus-send >/dev/null 2>&1; then \
-		dbus-send --session --type=method_call --dest=org.gnome.Shell /org/gnome/Shell org.gnome.Shell.Eval string:'global.reexec_self();'; \
+		if dbus-send --session --type=method_call --dest=org.gnome.Shell /org/gnome/Shell org.gnome.Shell.Eval string:'global.reexec_self();'; then \
+			:; \
+		else \
+			printf 'GNOME Shell declined to restart. Please log out/in or restart the session manually.\n' >&2; \
+		fi; \
 	else \
 		echo "Error: unable to restart GNOME Shell (busctl or dbus-send not found)." >&2; \
 		exit 1; \

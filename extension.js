@@ -12,7 +12,7 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+import * as ExtensionUtils from 'resource:///org/gnome/shell/extensions/extensionUtils.js';
 
 const INDICATOR_STYLE = 'no-ads-toggle-label';
 const SETTINGS_SCHEMA = 'org.gnome.shell.extensions.gnomad';

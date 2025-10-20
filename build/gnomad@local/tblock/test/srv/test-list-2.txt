@@ -1,7 +1,0 @@
-[allow]
-allow.example.org
-example.org
-
-[block]
-allow.example.com
-block.example.org
