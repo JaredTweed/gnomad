@@ -3,19 +3,47 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
-import * as ExtensionUtils from 'resource:///org/gnome/shell/extensions/extensionUtils.js';
 
-function getSettings() {
-    return ExtensionUtils.getSettings('org.gnome.shell.extensions.gnomad');
+const DEFAULT_SCHEMA = 'org.gnome.shell.extensions.gnomad';
+
+function resolveExtensionDir(metadata) {
+    if (!metadata)
+        return null;
+
+    if (metadata.dir?.get_child)
+        return metadata.dir;
+
+    if (metadata.path)
+        return Gio.File.new_for_path(metadata.path);
+
+    return null;
+}
+
+function getSettings(metadata, schemaId = metadata?.['settings-schema'] ?? DEFAULT_SCHEMA) {
+    const defaultSource = Gio.SettingsSchemaSource.get_default();
+    let schemaSource = defaultSource;
+
+    const extensionDir = resolveExtensionDir(metadata);
+    const schemaDir = extensionDir?.get_child?.('schemas');
+    if (schemaDir?.query_exists(null)) {
+        schemaSource = Gio.SettingsSchemaSource.new_from_directory(
+            schemaDir.get_path(), defaultSource, false);
+    }
+
+    const schema = schemaSource.lookup(schemaId, true);
+    if (!schema)
+        throw new Error(`Schema ${schemaId} could not be found for extension ${metadata?.uuid ?? 'unknown'}`);
+
+    return new Gio.Settings({settings_schema: schema});
 }
 
 export default class NoAdsPrefs {
     constructor(metadata) {
-        this.metadata = metadata;
+        this._metadata = metadata;
     }
 
     fillPreferencesWindow(window) {
-        const settings = getSettings();
+        const settings = getSettings(this._metadata);
 
         const page = new Adw.PreferencesPage();
         const group = new Adw.PreferencesGroup({ title: 'General' });

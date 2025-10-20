@@ -5,27 +5,22 @@
  * a Settings button. State is persisted in GSettings and mirrored to TBlock.
  */
 
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
+import {Extension as ExtensionBase} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as ExtensionUtils from 'resource:///org/gnome/shell/extensions/extensionUtils.js';
 
 const INDICATOR_STYLE = 'no-ads-toggle-label';
-const SETTINGS_SCHEMA = 'org.gnome.shell.extensions.gnomad';
 const TBLOCK_BASE_ARGS = ['--quiet', '--no-prompt'];
 
-function getSettings() {
-    return ExtensionUtils.getSettings(SETTINGS_SCHEMA);
-}
-
 class TBlockCommandRunner {
-    constructor() {
-        const extension = ExtensionUtils.getCurrentExtension();
-        const tblockDir = extension?.dir?.get_child('tblock');
+    constructor(extensionDir) {
+        const tblockDir = extensionDir?.get_child('tblock');
 
         if (!tblockDir || !tblockDir.query_exists(null)) {
             throw new Error('TBlock sources are missing; expected tblock/ inside the extension.');
@@ -71,8 +66,8 @@ class TBlockCommandRunner {
 }
 
 class TBlockClient {
-    constructor() {
-        this._runner = new TBlockCommandRunner();
+    constructor(extensionDir) {
+        this._runner = new TBlockCommandRunner(extensionDir);
     }
 
     async setEnabled(enabled) {
@@ -97,18 +92,19 @@ class TBlockClient {
 
 const Indicator = GObject.registerClass(
 class Indicator extends PanelMenu.Button {
-    _init() {
+    _init(extension) {
         super._init(0.0, 'Ads / No Ads Toggle');
 
-        this._settings = getSettings();
-        this._tblock = new TBlockClient();
+        this._extension = extension;
+        this._settings = extension.getSettings();
+        this._tblock = new TBlockClient(extension.dir);
         this._ignoreSetting = false;
         this._isBusy = false;
         this._pendingState = null;
 
         this._label = new St.Label({
             text: '',
-            y_align: St.Align.MIDDLE,
+            y_align: Clutter.ActorAlign.CENTER,
             style_class: INDICATOR_STYLE,
         });
         this.add_child(this._label);
@@ -137,7 +133,7 @@ class Indicator extends PanelMenu.Button {
             this._applyBlockState(enabled).catch(error => logError(error, 'Failed to apply TBlock state'));
         });
 
-        this._settingsItem.connect('activate', () => ExtensionUtils.openPrefs());
+        this._settingsItem.connect('activate', () => this._extension.openPreferences());
 
         this._initializeState();
     }
@@ -234,22 +230,19 @@ class Indicator extends PanelMenu.Button {
     }
 });
 
-let indicator;
-
-export default class Extension {
+export default class Extension extends ExtensionBase {
     constructor(metadata) {
-        this.metadata = metadata;
+        super(metadata);
+        this._indicator = null;
     }
 
     enable() {
-        indicator = new Indicator();
-        Main.panel.addToStatusArea('no-ads-toggle', indicator, 0, 'right');
+        this._indicator = new Indicator(this);
+        Main.panel.addToStatusArea('no-ads-toggle', this._indicator, 0, 'right');
     }
 
     disable() {
-        if (indicator) {
-            indicator.destroy();
-            indicator = null;
-        }
+        this._indicator?.destroy();
+        this._indicator = null;
     }
 }
